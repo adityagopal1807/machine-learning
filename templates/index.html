@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Student Score Predictor</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f6f8fa; margin:0; padding:0; }
+    .container { max-width:760px; margin:28px auto; background:#fff; padding:22px; border-radius:10px; box-shadow:0 6px 24px rgba(0,0,0,0.07); }
+    h1 { font-size:22px; margin:0 0 8px 0; }
+    label { display:block; margin-top:12px; font-weight:600; }
+    input[type="text"] { width:100%; padding:10px; margin-top:6px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; }
+    button { margin-top:14px; padding:10px 14px; border:0; background:#1976d2; color:white; border-radius:8px; cursor:pointer; font-weight:600; }
+    .result { margin-top:18px; padding:12px; background:#f0f8ff; border-radius:8px; }
+    .error { margin-top:18px; padding:12px; background:#fff0f0; border-radius:8px; color:#a00; }
+    .metrics { margin-top:10px; padding:12px; background:#fbfbfb; border-radius:8px; border:1px solid #eee; }
+    .row { display:flex; gap:16px; align-items:flex-start; }
+    .col { flex:1; }
+    img.plot { max-width:100%; border-radius:8px; box-shadow:0 8px 18px rgba(0,0,0,0.06); }
+    small { color:#555; display:block; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Student Score Predictor</h1>
+    <p>Enter study hours (single or comma-separated) to get predicted score(s).</p>
+
+    <form method="post" action="/">
+      <label for="hours">Hours Studied</label>
+      <input id="hours" name="hours" type="text" placeholder="e.g. 9.25  OR  9.25, 6.1" value="{{ input_text or '' }}">
+      <button type="submit" name="action" value="predict">Predict</button>
+      <button type="submit" name="action" value="retrain" style="background:#4caf50; margin-left:10px;">Retrain Model</button>
+    </form>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if result %}
+      <div class="result">
+        <strong>Predictions:</strong>
+        <ul>
+          {% for r in result %}
+            <li>Hours: <strong>{{ r.hours }}</strong> → Predicted Score: <strong>{{ r.predicted_score }}</strong></li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="row" style="margin-top:14px;">
+      <div class="col">
+        <div class="metrics">
+          <strong>Model metrics (computed on CSV):</strong>
+          <div>R²: {{ metrics.r2 | round(4) if metrics.r2 is defined else 'N/A' }}</div>
+          <div>MAE: {{ metrics.mae | round(4) if metrics.mae is defined else 'N/A' }}</div>
+          <div>RMSE: {{ metrics.rmse | round(4) if metrics.rmse is defined else 'N/A' }}</div>
+          <div>Slope (m): {{ metrics.slope | round(4) if metrics.slope is defined else 'N/A' }}</div>
+          <div>Intercept (b): {{ metrics.intercept | round(4) if metrics.intercept is defined else 'N/A' }}</div>
+        </div>
+      </div>
+      <div class="col">
+        <strong>Regression plot</strong>
+        <div style="margin-top:8px;">
+          <img class="plot" src="data:image/png;base64,{{ plot_png }}" alt="regression plot"/>
+        </div>
+      </div>
+    </div>
+
+    <hr style="margin:18px 0" />
+    <small>
+      API: POST JSON to <code>/predict</code> with <code>{"hours":9.25}</code> or <code>{"hours":[9.25,6.1]}</code>.
+    </small>
+  </div>
+</body>
+</html>
